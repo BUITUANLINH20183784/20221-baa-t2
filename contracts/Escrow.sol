@@ -55,6 +55,7 @@ contract Escrow {
 
     // Put Under Contract (only buyer - payable escrow)
     function depositEarnest(uint256 _nftID, address _inspector, address _lender) public payable {
+        // TODO: add function to change inspector, lender and add escrow ammount
         require(msg.value >= properties[_nftID].escrowAmount);
 
         properties[_nftID].buyer = msg.sender;
@@ -76,6 +77,8 @@ contract Escrow {
 
     // Approve Sale
     function approveSale(uint256 _nftID) public {
+        // TODO: lender lend the rest
+        // TODO: add _approval as param
         require(properties[_nftID].lender == msg.sender);
         properties[_nftID].lenderApproved = true;
     }
@@ -105,6 +108,7 @@ contract Escrow {
     // Cancel Sale (handle earnest deposit)
     // -> if inspection status is not approved, then refund, otherwise send to seller
     function cancelSale(uint256 _nftID) public {
+        // TODO: seperate pendingAmount for lender and buyer
         require(properties[_nftID].buyer == msg.sender);
         if (properties[_nftID].isInspected == false) {
             payable(properties[_nftID].buyer).transfer(properties[_nftID].pendingAmount);
