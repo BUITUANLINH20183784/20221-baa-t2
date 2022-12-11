@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import Navigation from './components/Navigation';
 import Search from './components/Search';
 import Home from './components/Home';
+import Sell from './components/Sell.js';
 
 // ABIs
 import RealEstate from './abis/RealEstate.json'
@@ -22,6 +23,8 @@ function App() {
   const [homes, setHomes] = useState([])
   const [home, setHome] = useState({})
   const [toggle, setToggle] = useState(false);
+
+  const [sellPopup, setSellPopup] = useState(false);
 
   const loadBlockchainData = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
@@ -62,7 +65,7 @@ function App() {
 
   return (
     <div>
-      <Navigation account={account} setAccount={setAccount} />
+      <Navigation account={account} setAccount={setAccount} toggleSell={() => { setSellPopup(!sellPopup) }} />
       <Search />
 
       <div className='cards__section'>
@@ -94,6 +97,9 @@ function App() {
 
       {toggle && (
         <Home home={home} provider={provider} account={account} escrow={escrow} togglePop={togglePop} />
+      )}
+      {sellPopup && (
+        <Sell close={() => { setSellPopup(!sellPopup) }} />
       )}
 
     </div>

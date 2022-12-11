@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import logo from '../assets/logo.svg';
 
-const Navigation = ({ account, setAccount }) => {
+const Navigation = ({ account, setAccount, toggleSell }) => {
     const connectHandler = async () => {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         const account = ethers.utils.getAddress(accounts[0])
@@ -13,7 +13,10 @@ const Navigation = ({ account, setAccount }) => {
             <ul className='nav__links'>
                 <li><a href="#">Buy</a></li>
                 <li><a href="#">Rent</a></li>
-                <li><a href="#">Sell</a></li>
+                <li><a href="#" onClick={(e) => {
+                    e.preventDefault();
+                    toggleSell();
+                }}>Sell</a></li>
             </ul>
 
             <div className='nav__brand'>
