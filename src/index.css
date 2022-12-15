@@ -354,3 +354,39 @@ header {
     display: none;
   }
 }
+
+/* ------------------------------------------------------ */
+/* -- SELL -- */
+
+.sell__mult {
+  display: flex;
+  column-gap: 2em;
+  flex-wrap: wrap;
+}
+
+.sell__field {
+  width: 100%;
+  max-width: 50em;
+  min-width: 25em;
+  flex: 1;
+}
+
+.sell__field > label {
+  display: block;
+  padding: .5em 1em .5em 0em;
+}
+
+.sell__field > input {
+  padding: .5em;
+  width: 100%;
+}
+
+.sell__field > input:invalid {
+  background-color: #D99;
+}
+
+.sell__field > textarea {
+  padding: .5em;
+  width: 100%;
+}
+
