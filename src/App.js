@@ -17,6 +17,7 @@ import config from './config.json';
 function App() {
   const [provider, setProvider] = useState(null)
   const [escrow, setEscrow] = useState(null)
+  const [realEstate, setRealEstate] = useState(null)
 
   const [account, setAccount] = useState(null)
 
@@ -26,12 +27,7 @@ function App() {
 
   const [sellPopup, setSellPopup] = useState(false);
 
-  const loadBlockchainData = async () => {
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    setProvider(provider)
-    const network = await provider.getNetwork()
-
-    const realEstate = new ethers.Contract(config[network.chainId].realEstate.address, RealEstate, provider)
+  const fetchHomes = async (realEstate) => {
     const totalSupply = await realEstate.totalSupply()
     const homes = []
 
@@ -43,8 +39,18 @@ function App() {
     }
 
     setHomes(homes)
+  }
 
-    const escrow = new ethers.Contract(config[network.chainId].escrow.address, Escrow, provider)
+  const loadBlockchainData = async () => {
+    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    setProvider(provider)
+    const network = await provider.getNetwork()
+
+    const realEstate = new ethers.Contract(config[network.chainId].realEstate.address, RealEstate.abi, provider)
+    setRealEstate(realEstate)
+    await fetchHomes(realEstate)
+
+    const escrow = new ethers.Contract(config[network.chainId].escrow.address, Escrow.abi, provider)
     setEscrow(escrow)
 
     window.ethereum.on('accountsChanged', async () => {
@@ -99,7 +105,7 @@ function App() {
         <Home home={home} provider={provider} account={account} escrow={escrow} togglePop={togglePop} />
       )}
       {sellPopup && (
-        <Sell close={() => { setSellPopup(!sellPopup) }} />
+        <Sell close={() => { setSellPopup(!sellPopup)}} {...{provider, account, realEstate, escrow, fetchHomes}} />
       )}
 
     </div>

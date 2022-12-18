@@ -1,8 +1,8 @@
-// import { ethers } from "ethers";
+import { ethers } from "ethers";
 import { useState } from "react";
 import closeSVG from "../assets/close.svg";
 
-const Sell = ({ close }) => {
+const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
   const initialProperty = {
     name: "",
     address: "",
@@ -15,9 +15,11 @@ const Sell = ({ close }) => {
     bathrooms: 0,
     squareFeet: 0,
     yearBuilt: 0,
+    escrowAmount: 0,
   };
   const [property, setProperty] = useState(initialProperty);
   const [uploadedImage, setUploadedImage] = useState(null);
+  const [status, setStatus] = useState("Approve");
   const uploadIPFS = async (file) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -161,6 +163,18 @@ const Sell = ({ close }) => {
                 >
                 </input>
               </div>
+              <div className="sell__field">
+                <label>Escrow Amount</label>
+                <input
+                  type="number"
+                  value={property.escrowAmount}
+                  onChange={(e) =>
+                    setProperty({ ...property, escrowAmount: e.target.value })}
+                  min="0"
+                  required
+                >
+                </input>
+              </div>
             </div>
             <input
               type="submit"
@@ -176,62 +190,100 @@ const Sell = ({ close }) => {
                   property.bedRooms !== null && property.bedRooms >= 0 &&
                   property.bathrooms !== null && property.bathrooms >= 0 &&
                   property.squareFeet !== null && property.squareFeet >= 0 &&
-                  property.yearBuilt !== null && property.yearBuilt >= 0
+                  property.yearBuilt !== null && property.yearBuilt >= 0 &&
+                  property.escrowAmount !== null && property.escrowAmount >= 0
                 ) {
+                  setStatus("Loading");
                   // let imgLink;
                   // if (uploadedImage) {
                   //   imgLink = await uploadIPFS(uploadedImage);
                   // } else imgLink = "";
-                  const imgLink = (uploadedImage ? (await uploadIPFS(uploadedImage)) : "")
+                  const imgLink = uploadedImage
+                    ? (await uploadIPFS(uploadedImage))
+                    : "";
                   if (imgLink) {
-                    const res = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
-                      method: "POST",
-                      body: JSON.stringify({
-                        pinataContent: {
-                          "name": property.name,
-                          "address": property.address,
-                          "description": property.description,
-                          "image": imgLink,
-                          "id": "1",
-                          "attributes": [
-                            {
-                              "trait_type": "Purchase Price",
-                              "value": property.purchasePrice
-                            },
-                            {
-                              "trait_type": "Type of Residence",
-                              "value": property.typeOfResidence
-                            },
-                            {
-                              "trait_type": "Bed Rooms",
-                              "value": property.bedRooms
-                            },
-                            {
-                              "trait_type": "Bathrooms",
-                              "value": property.bathrooms
-                            },
-                            {
-                              "trait_type": "Square Feet",
-                              "value": property.squareFeet
-                            },
-                            {
-                              "trait_type": "Year Built",
-                              "value": property.yearBuilt
-                            }
-                          ]
-                        }
-                      }),
-                      headers: {
-                        "pinata_api_key": `${process.env.REACT_APP_PINATA_API_KEY}`,
-                        "pinata_secret_api_key": `${process.env.REACT_APP_PINATA_API_SECRET}`,
-                        'Content-Type': 'application/json', 
+                    const newProperty = {
+                      "name": property.name,
+                      "address": property.address,
+                      "description": property.description,
+                      "image": imgLink,
+                      "id": "1",
+                      "attributes": [
+                        {
+                          "trait_type": "Purchase Price",
+                          "value": property.purchasePrice,
+                        },
+                        {
+                          "trait_type": "Type of Residence",
+                          "value": property.typeOfResidence,
+                        },
+                        {
+                          "trait_type": "Bed Rooms",
+                          "value": property.bedRooms,
+                        },
+                        {
+                          "trait_type": "Bathrooms",
+                          "value": property.bathrooms,
+                        },
+                        {
+                          "trait_type": "Square Feet",
+                          "value": property.squareFeet,
+                        },
+                        {
+                          "trait_type": "Year Built",
+                          "value": property.yearBuilt,
+                        },
+                      ],
+                    };
+                    const res = await fetch(
+                      "https://api.pinata.cloud/pinning/pinJSONToIPFS",
+                      {
+                        method: "POST",
+                        body: JSON.stringify({
+                          pinataContent: newProperty,
+                        }),
+                        headers: {
+                          "pinata_api_key":
+                            `${process.env.REACT_APP_PINATA_API_KEY}`,
+                          "pinata_secret_api_key":
+                            `${process.env.REACT_APP_PINATA_API_SECRET}`,
+                          "Content-Type": "application/json",
+                        },
                       },
-                    }).then(res => res.json())
-                    console.log({res})
-                  }
+                    ).then((res) => res.json());
+                    if (res.IpfsHash) {
+                      setStatus("Processing");
+                      const { IpfsHash } = res;
+                      const signer = await provider.getSigner();
+                      await realEstate.connect(signer).mint(
+                        `https://gateway.pinata.cloud/ipfs/${IpfsHash}`,
+                      ).then((transaction) => transaction.wait());
+                      fetchHomes(realEstate);
+                      const tokens = (n) => {
+                        return ethers.utils.parseUnits(n.toString(), "ether");
+                      };
+                      let transaction;
+                      const totalSupply = await realEstate.totalSupply();
+                      transaction = await realEstate.connect(signer).approve(
+                        escrow.address,
+                        totalSupply,
+                      );
+                      await transaction.wait();
+                      transaction = await escrow.connect(signer).list(
+                        totalSupply,
+                        tokens(property.purchasePrice),
+                        tokens(property.escrowAmount),
+                      );
+                      await transaction.wait();
+                      close();
+                    } else {
+                      setStatus("Error");
+                      console.log({ res });
+                    }
+                  } else console.log("Image error");
                 }
               }}
-              value="Accept"
+              value={status}
             />
           </form>
         </div>
