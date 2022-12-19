@@ -319,6 +319,10 @@ header {
   background-color: var(--clr-blue-2);
 }
 
+.home__buy:disabled {
+  background-color: var(--clr-grey);
+}
+
 .home__contact {
   width: 150px;
   height: 50px;

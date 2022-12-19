@@ -284,6 +284,7 @@ const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
                 }
               }}
               value={status}
+              disabled={status !== "Approve"}
             />
           </form>
         </div>
