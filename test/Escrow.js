@@ -41,6 +41,11 @@ describe('Escrow', () => {
             const result = await escrow.nftAddress()
             expect(result).to.be.equal(realEstate.address)
         })
+
+        it('Sets seller', async () => {
+            const result = await escrow.properties(1)
+            expect(result.seller).to.be.equal(seller.address)
+        })
     })
 
     describe('Deposits', () => {

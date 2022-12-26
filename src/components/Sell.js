@@ -202,12 +202,13 @@ const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
                     ? (await uploadIPFS(uploadedImage))
                     : "";
                   if (imgLink) {
+                    const currentId = Number(await realEstate.totalSupply()) + 1;
                     const newProperty = {
                       "name": property.name,
                       "address": property.address,
                       "description": property.description,
                       "image": imgLink,
-                      "id": "1",
+                      "id": currentId,
                       "attributes": [
                         {
                           "trait_type": "Purchase Price",
@@ -263,14 +264,13 @@ const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
                         return ethers.utils.parseUnits(n.toString(), "ether");
                       };
                       let transaction;
-                      const totalSupply = await realEstate.totalSupply();
                       transaction = await realEstate.connect(signer).approve(
                         escrow.address,
-                        totalSupply,
+                        currentId,
                       );
                       await transaction.wait();
                       transaction = await escrow.connect(signer).list(
-                        totalSupply,
+                        currentId,
                         tokens(property.purchasePrice),
                         tokens(property.escrowAmount),
                       );

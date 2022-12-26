@@ -63,23 +63,28 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
   };
 
   const buyHandler = async () => {
-    const escrowAmount = await escrow.escrowAmount(home.id);
+    // const escrowAmount = await escrow.escrowAmount(home.id);
+    const escrowAmount = property.purchasePrice // TODO: lending
     const signer = await provider.getSigner();
 
     // Buyer deposit earnest
-    let transaction = await escrow.connect(signer).depositEarnest(home.id, {
+    let transaction = await escrow.connect(signer).depositEarnest(home.id, newInspector, newLender, {
       value: escrowAmount,
     });
     await transaction.wait();
 
     // Buyer approves...
-    transaction = await escrow.connect(signer).approveSale(home.id);
-    await transaction.wait();
+    // transaction = await escrow.connect(signer).approveSale(home.id);
+    // await transaction.wait();
 
     setHasBought(true);
   };
 
   const inspectHandler = async () => {
+    if (account !== inspector || hasInspected === true) {
+      return
+    }
+
     const signer = await provider.getSigner();
 
     // Inspector updates status
@@ -100,13 +105,13 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
     await transaction.wait();
 
     // Lender sends funds to contract...
-    const lendAmount = await escrow.purchasePrice(home.id) -
-      await escrow.escrowAmount(home.id);
-    await signer.sendTransaction({
-      to: escrow.address,
-      value: lendAmount.toString(),
-      gasLimit: 60000,
-    });
+    // const lendAmount = await escrow.purchasePrice(home.id) -
+    //   await escrow.escrowAmount(home.id);
+    // await signer.sendTransaction({
+    //   to: escrow.address,
+    //   value: lendAmount.toString(),
+    //   gasLimit: 60000,
+    // });
 
     setHasLended(true);
   };
@@ -115,11 +120,11 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
     const signer = await provider.getSigner();
 
     // Seller approves...
-    let transaction = await escrow.connect(signer).approveSale(home.id);
-    await transaction.wait();
+    // let transaction = await escrow.connect(signer).approveSale(home.id);
+    // await transaction.wait();
 
     // Seller finalize...
-    transaction = await escrow.connect(signer).finalizeSale(home.id);
+    const transaction = await escrow.connect(signer).finalizeSale(home.id);
     await transaction.wait();
 
     setHasSold(true);
@@ -127,7 +132,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
 
   useEffect(() => {
     fetchDetails();
-  }, [hasSold]);
+  }, []);
 
   return (
     <div className="home">
