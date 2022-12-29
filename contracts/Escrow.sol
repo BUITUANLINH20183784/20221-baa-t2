@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol";
-
 interface IERC721 {
     function transferFrom(
         address _from,
@@ -48,10 +46,8 @@ contract Escrow {
     ) public payable {
         // Transfer NFT from seller to this contract
         IERC721(nftAddress).transferFrom(msg.sender, address(this), _nftID);
-        console.log("sender address: ", msg.sender);
 
         properties[_nftID].seller = payable(msg.sender);
-        console.log("seller address: ", properties[_nftID].seller);
         properties[_nftID].purchasePrice = _purchasePrice;
         properties[_nftID].escrowAmount = _escrowAmount;
         properties[_nftID].state = State.OnSale;
