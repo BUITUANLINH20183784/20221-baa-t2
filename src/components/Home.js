@@ -51,11 +51,13 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
 
     setLender(lender);
     setHasLended(lenderApproved);
+    setNewLender(lender)
 
     // -- Inspector
 
     setInspector(inspector);
     setHasInspected(isInspected);
+    setNewInspector(inspector)
 
     if (property.state === 2) {
       setOwner(property.buyer);
@@ -78,6 +80,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
     // await transaction.wait();
 
     setHasBought(true);
+    setProperty({...property, state: 1})
   };
 
   const inspectHandler = async () => {
@@ -128,11 +131,12 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
     await transaction.wait();
 
     setHasSold(true);
+    setProperty({...property, state: 2})
   };
 
   useEffect(() => {
     fetchDetails();
-  }, []);
+  }, [property]);
 
   return (
     <div className="home">
