@@ -28,7 +28,8 @@ contract Escrow {
         bool isInspected;
         bool lenderApproved;
         State state;
-        uint256 pendingAmount;
+        uint256 paidAmount;
+        uint256 lentAmount;
     }
 
     mapping(uint256 => Property) public properties;
@@ -55,8 +56,8 @@ contract Escrow {
 
     // Put Under Contract (only buyer - payable escrow)
     function depositEarnest(uint256 _nftID, address _inspector, address _lender) public payable {
-        // TODO: add function to change inspector, lender and add escrow ammount
-        require(msg.value >= properties[_nftID].escrowAmount);
+        require(properties[_nftID].state == State.OnSale, "Not on sale");
+        require(msg.value >= properties[_nftID].escrowAmount, "Not enough escrow amount");
 
         properties[_nftID].buyer = payable(msg.sender);
         properties[_nftID].inspector = _inspector;
@@ -64,23 +65,25 @@ contract Escrow {
         properties[_nftID].isInspected = false;
         properties[_nftID].lenderApproved = false;
         properties[_nftID].state = State.Pending;
-        properties[_nftID].pendingAmount = msg.value;
+        properties[_nftID].paidAmount = msg.value;
+        properties[_nftID].lentAmount = 0;
     }
 
     // Update Inspection Status (only inspector)
     function updateInspectionStatus(uint256 _nftID, bool _passed)
         public
     {
+        require(properties[_nftID].state == State.Pending, "Not in pending");
         require(properties[_nftID].inspector == msg.sender, "Only authorized inspector can call this method");
         properties[_nftID].isInspected = _passed;
     }
 
     // Approve Sale
-    function approveSale(uint256 _nftID) public {
-        // TODO: lender lend the rest
-        // TODO: add _approval as param
+    function approveSale(uint256 _nftID) public payable {
+        require(properties[_nftID].state == State.Pending, "Not in pending");
         require(properties[_nftID].lender == msg.sender, "Only authorized lender can call this method");
         properties[_nftID].lenderApproved = true;
+        properties[_nftID].lentAmount += msg.value;
     }
 
     // Finalize Sale
@@ -90,13 +93,15 @@ contract Escrow {
     // -> Transfer NFT to buyer
     // -> Transfer Funds to Seller
     function finalizeSale(uint256 _nftID) public {
+        require(properties[_nftID].state == State.Pending, "Not in pending");
         require(properties[_nftID].seller == payable(msg.sender), "Only authorized seller can call this method");
         require(properties[_nftID].isInspected, "Not inspected");
         require(properties[_nftID].lenderApproved, "Not approved");
-        require(address(this).balance >= properties[_nftID].purchasePrice, "Not enough amount");
-        require(properties[_nftID].pendingAmount >= properties[_nftID].purchasePrice, "Not enough amount");
+        require(address(this).balance >= properties[_nftID].purchasePrice, "Not enough balance");
+        uint256 totalAmount = properties[_nftID].paidAmount + properties[_nftID].lentAmount;
+        require(totalAmount >= properties[_nftID].purchasePrice, "Not enough amount");
 
-        (bool success, ) = payable(properties[_nftID].seller).call{value: properties[_nftID].pendingAmount}(
+        (bool success, ) = payable(properties[_nftID].seller).call{value: totalAmount}(
             ""
         );
         require(success, "Cannot pay seller");
@@ -109,12 +114,16 @@ contract Escrow {
     // Cancel Sale (handle earnest deposit)
     // -> if inspection status is not approved, then refund, otherwise send to seller
     function cancelSale(uint256 _nftID) public {
-        // TODO: seperate pendingAmount for lender and buyer
+        require(properties[_nftID].state == State.Pending, "Not in pending");
         require(properties[_nftID].buyer == payable(msg.sender) || properties[_nftID].seller == payable(msg.sender), "Only authorized seller or buyer can call this method");
+        uint256 totalAmount = properties[_nftID].paidAmount + properties[_nftID].lentAmount;
         if (properties[_nftID].isInspected == false) {
-            payable(properties[_nftID].buyer).transfer(properties[_nftID].pendingAmount);
+            payable(properties[_nftID].buyer).transfer(properties[_nftID].paidAmount);
+            if (properties[_nftID].lenderApproved) {
+                payable(properties[_nftID].lender).transfer(properties[_nftID].lentAmount);
+            }
         } else {
-            payable(properties[_nftID].seller).transfer(properties[_nftID].pendingAmount);
+            payable(properties[_nftID].seller).transfer(totalAmount);
         }
         properties[_nftID].state = State.OnSale;
     }

@@ -21,6 +21,10 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
   const [newInspector, setNewInspector] = useState("");
   const [newLender, setNewLender] = useState("");
 
+  const addressPattern = "^0x[a-fA-F0-9]{40}$"
+  const addressRegex = RegExp(addressPattern)
+  const zeroAddress = "0x0000000000000000000000000000000000000000"
+
   const fetchDetails = async () => {
     const property = await escrow.properties(home.id);
     setProperty(property);
@@ -34,12 +38,41 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
       isInspected,
       lenderApproved,
       state,
-      pendingAmount,
+      paidAmount,
+      lentAmount,
     } = property;
+    switch (state) {
+      case 0:
+        setBuyer(null)
+        setInspector(null)
+        setNewInspector("")
+        setLender(null)
+        setNewLender("")
+        setHasInspected(false);
+        setHasLended(false);
+        break;
+      case 1:
+      case 2:
+        console.log("case 1 & 2")
+        setBuyer(buyer)
+        setInspector(inspector)
+        setNewInspector(inspector)
+        setLender(lender)
+        setNewLender(lender)
+        setHasInspected(isInspected);
+        setHasLended(lenderApproved);
+        break;
+      case 2:
+        console.log("case 2")
+        break;
+        
+      default:
+        break;
+    }
 
     // -- Buyer
 
-    setBuyer(buyer);
+    // setBuyer(buyer);
     setHasBought(state === 2);
 
     // -- Seller
@@ -49,15 +82,19 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
 
     // -- Lender
 
-    setLender(lender);
-    setHasLended(lenderApproved);
-    setNewLender(lender)
+    // if (state === 1) {
+    //   setLender(lender);
+    //   setNewLender(lender)
+    // }
+    // setHasLended(lenderApproved);
 
     // -- Inspector
 
-    setInspector(inspector);
-    setHasInspected(isInspected);
-    setNewInspector(inspector)
+    // if (state === 1) {
+    //   setInspector(inspector);
+    //   setNewInspector(inspector)
+    // }
+    // setHasInspected(isInspected);
 
     if (property.state === 2) {
       setOwner(property.buyer);
@@ -65,8 +102,12 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
   };
 
   const buyHandler = async () => {
-    // const escrowAmount = await escrow.escrowAmount(home.id);
-    const escrowAmount = property.purchasePrice // TODO: lending
+    if (!addressRegex.test(newInspector) || !addressRegex.test(newLender)) {
+      setContactShown(true);
+      return
+    }
+
+    const escrowAmount = property.escrowAmount
     const signer = await provider.getSigner();
 
     // Buyer deposit earnest
@@ -81,6 +122,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
 
     setHasBought(true);
     setProperty({...property, state: 1})
+    fetchDetails();
   };
 
   const inspectHandler = async () => {
@@ -104,12 +146,14 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
     const signer = await provider.getSigner();
 
     // Lender approves...
-    const transaction = await escrow.connect(signer).approveSale(home.id);
+    const lendAmount = Math.max(property.purchasePrice - property.paidAmount - property.lentAmount, 0);
+    // console.log({lendAmount})
+    const transaction = await escrow.connect(signer).approveSale(home.id, {
+      value: lendAmount.toString(), // because lendAmount is not BigNum string, after calculation
+    });
     await transaction.wait();
 
     // Lender sends funds to contract...
-    // const lendAmount = await escrow.purchasePrice(home.id) -
-    //   await escrow.escrowAmount(home.id);
     // await signer.sendTransaction({
     //   to: escrow.address,
     //   value: lendAmount.toString(),
@@ -117,6 +161,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
     // });
 
     setHasLended(true);
+    fetchDetails();
   };
 
   const sellHandler = async () => {
@@ -132,11 +177,12 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
 
     setHasSold(true);
     setProperty({...property, state: 2})
+    fetchDetails();
   };
 
   useEffect(() => {
     fetchDetails();
-  }, [property]);
+  }, []);
 
   return (
     <div className="home">
@@ -178,9 +224,9 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                     <button
                       className="home__buy"
                       onClick={lendHandler}
-                      disabled={hasLended}
+                      disabled={hasLended && (property.purchasePrice - property.paidAmount - property.lentAmount <= 0)}
                     >
-                      Approve & Lend
+                        Approve & Lend {ethers.utils.formatEther(Math.max(property.purchasePrice - property.paidAmount - property.lentAmount, 0).toString())} ETH
                     </button>
                   )
                   : (account === seller)
@@ -194,13 +240,22 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                       Approve & Sell
                     </button>
                   )
+                  : (account === buyer)
+                  ? (
+                    <button
+                      className="home__buy"
+                      disabled
+                    >
+                      Cancel
+                    </button>
+                  )
                   : (
                     <button
                       className="home__buy"
                       onClick={buyHandler}
                       disabled={!(property.state === 0)}
                     >
-                      Buy
+                      Buy {property.state === 0 ? `(${ethers.utils.formatEther(property.escrowAmount)} ETH)` : ""}
                     </button>
                   )}
 
@@ -220,6 +275,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                   type="text"
                   value={newInspector}
                   onChange={(e) => setNewInspector(e.target.value)}
+                  pattern={addressPattern}
                   required
                 >
                 </input>
@@ -230,6 +286,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                   type="text"
                   value={newLender}
                   onChange={(e) => setNewLender(e.target.value)}
+                  pattern={addressPattern}
                   required
                 >
                 </input>
