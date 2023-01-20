@@ -53,7 +53,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
         break;
       case 1:
       case 2:
-        console.log("case 1 & 2")
+        // console.log("case 1 & 2")
         setBuyer(buyer)
         setInspector(inspector)
         setNewInspector(inspector)
@@ -63,7 +63,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
         setHasLended(lenderApproved);
         break;
       case 2:
-        console.log("case 2")
+        // console.log("case 2")
         break;
         
       default:
@@ -218,8 +218,8 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                     >
                       Approve Inspection
                     </button>
-                  )
-                  : (account === lender)
+                  ) : null}
+                { (account === lender)
                   ? (
                     <button
                       className="home__buy"
@@ -228,8 +228,8 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                     >
                         Approve & Lend {ethers.utils.formatEther(Math.max(property.purchasePrice - property.paidAmount - property.lentAmount, 0).toString())} ETH
                     </button>
-                  )
-                  : (account === seller)
+                  ) : null}
+                { (account === seller)
                   ? (
                     <button
                       className="home__buy"
@@ -239,8 +239,8 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                     >
                       Approve & Sell
                     </button>
-                  )
-                  : (account === buyer)
+                  ) : null}
+                { (account === buyer)
                   ? (
                     <button
                       className="home__buy"
@@ -248,8 +248,8 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                     >
                       Cancel
                     </button>
-                  )
-                  : (
+                  ) : null}
+                {(account !== buyer && account !== seller && account !== inspector && account !== lender)? (
                     <button
                       className="home__buy"
                       onClick={buyHandler}
@@ -257,7 +257,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                     >
                       Buy {property.state === 0 ? `(${ethers.utils.formatEther(property.escrowAmount)} ETH)` : ""}
                     </button>
-                  )}
+                  ):null}
 
                 <button
                   className="home__contact"
