@@ -46,3 +46,4 @@ cache
 artifacts
 
 /tmp
+secrets.json

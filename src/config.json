@@ -6,5 +6,13 @@
         "escrow": {
             "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
         }
+    },
+    "97": {
+        "realEstate": {
+            "address": "0x7dcFB17216F327596ee853682B3e0596a9D8e9C1"
+        },
+        "escrow": {
+            "address": "0xE25Ed45155614676DD3A7385F85d98d46318fb55"
+        }
     }
 }

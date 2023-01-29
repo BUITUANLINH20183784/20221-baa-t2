@@ -3,6 +3,8 @@ import { useState } from "react";
 import closeSVG from "../assets/close.svg";
 
 const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
+  const pinata_api_key = process.env.REACT_APP_PINATA_API_KEY
+  const pinata_secret_api_key = process.env.REACT_APP_PINATA_API_SECRET
   const initialProperty = {
     name: "",
     address: "",
@@ -29,8 +31,8 @@ const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
         method: "POST",
         body: formData,
         headers: {
-          "pinata_api_key": `${process.env.REACT_APP_PINATA_API_KEY}`,
-          "pinata_secret_api_key": `${process.env.REACT_APP_PINATA_API_SECRET}`,
+          "pinata_api_key": `${pinata_api_key}`,
+          "pinata_secret_api_key": `${pinata_secret_api_key}`,
         },
       },
     ).then((res) => res.json());
@@ -248,9 +250,9 @@ const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
                         }),
                         headers: {
                           "pinata_api_key":
-                            `${process.env.REACT_APP_PINATA_API_KEY}`,
+                            `${pinata_api_key}`,
                           "pinata_secret_api_key":
-                            `${process.env.REACT_APP_PINATA_API_SECRET}`,
+                            `${pinata_secret_api_key}`,
                           "Content-Type": "application/json",
                         },
                       },
