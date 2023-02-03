@@ -207,6 +207,8 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                 Owned by {owner.slice(0, 6) + "..." + owner.slice(38, 42)}
               </div>
             )
+            : (!addressRegex.test(account))
+            ? (<div></div>)
             : (
               <div>
                 {(account === inspector)
