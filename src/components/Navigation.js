@@ -21,7 +21,7 @@ const Navigation = ({ account, setAccount, toggleSell }) => {
 
             <div className='nav__brand'>
                 <img src={logo} alt="Logo" />
-                <h1>Millow</h1>
+                <h1>Billow</h1>
             </div>
 
             {account ? (

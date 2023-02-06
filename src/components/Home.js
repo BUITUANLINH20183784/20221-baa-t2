@@ -199,7 +199,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
           </p>
           <p>{home.address}</p>
 
-          <h2>{home.attributes[0].value} ETH</h2>
+          <h2>${home.attributes[0].value}</h2>
 
           {owner
             ? (
@@ -228,7 +228,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                       onClick={lendHandler}
                       disabled={hasLended && (property.purchasePrice - property.paidAmount - property.lentAmount <= 0)}
                     >
-                        Approve & Lend {ethers.utils.formatEther(Math.max(property.purchasePrice - property.paidAmount - property.lentAmount, 0).toString())} ETH
+                        Approve & Lend ${ethers.utils.formatEther(Math.max(property.purchasePrice - property.paidAmount - property.lentAmount, 0).toString())}
                     </button>
                   ) : null}
                 { (account === seller)
@@ -257,7 +257,7 @@ const Home = ({ home, provider, account, escrow, togglePop }) => {
                       onClick={buyHandler}
                       disabled={!(property.state === 0)}
                     >
-                      Buy {property.state === 0 ? `(${ethers.utils.formatEther(property.escrowAmount)} ETH)` : ""}
+                      Buy {property.state === 0 ? `($${ethers.utils.formatEther(property.escrowAmount)})` : ""}
                     </button>
                   ):null}
 

@@ -99,7 +99,7 @@ const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
                   onChange={(e) =>
                     setProperty({ ...property, purchasePrice: e.target.value })}
                   min="0"
-                  step="0.01"
+                  step="0.00001"
                   required
                 >
                 </input>
@@ -175,7 +175,7 @@ const Sell = ({ close, provider, account, realEstate, escrow, fetchHomes }) => {
                   onChange={(e) =>
                     setProperty({ ...property, escrowAmount: e.target.value })}
                   min="0"
-                  step="0.01"
+                  step="0.00001"
                   required
                 >
                 </input>
